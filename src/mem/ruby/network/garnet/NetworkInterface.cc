@@ -34,12 +34,15 @@
 
 #include <cassert>
 #include <cmath>
+#include <fstream>
 
 #include "base/cast.hh"
 #include "debug/RubyNetwork.hh"
 #include "mem/ruby/network/MessageBuffer.hh"
 #include "mem/ruby/network/garnet/Credit.hh"
 #include "mem/ruby/network/garnet/flitBuffer.hh"
+#include "mem/ruby/network/garnet/logger/GarnetLogger.hh"
+#include "mem/ruby/network/garnet/proto/garnet_event.pb.h"
 #include "mem/ruby/slicc_interface/Message.hh"
 
 namespace gem5
@@ -384,7 +387,6 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
     DPRINTF(RubyNetwork, "Message Size:%d vnet:%d bitWidth:%d\n",
         m_net_ptr->MessageSizeType_to_int(net_msg_ptr->getMessageSize()),
         vnet, oPort->bitWidth());
-
     // loop to convert all multicast messages into unicast messages
     for (int ctr = 0; ctr < dest_nodes.size(); ctr++) {
 
@@ -444,7 +446,6 @@ NetworkInterface::flitisizeMessage(MsgPtr msg_ptr, int vnet)
                 m_net_ptr->MessageSizeType_to_int(
                 net_msg_ptr->getMessageSize()),
                 oPort->bitWidth(), curTick());
-
             fl->set_src_delay(curTick() - msg_ptr->getTime());
             niOutVcs[vc].insert(fl);
         }
@@ -597,6 +598,25 @@ NetworkInterface::scheduleFlit(flit *t_flit)
         *t_flit, *(t_flit->get_msg_ptr()));
         oPort->outFlitQueue()->insert(t_flit);
         oPort->outNetLink()->scheduleEventAbsolute(clockEdge(Cycles(1)));
+
+        // printf("### %ld RI %d %d %d %d %d\n",
+        //     curTick(),
+        //     t_flit->get_global_id(),
+        //     t_flit->getPacketID(),
+        //     t_flit->get_id(),
+        //     t_flit->get_route().src_router,
+        //     t_flit->get_route().dest_router);
+
+        garnetlog::GarnetEvent ev;
+        ev.set_tick(static_cast<int64_t>(curTick()));
+        ev.set_status("RI");
+        ev.set_global_id(t_flit->get_global_id());
+        ev.set_packet_id(t_flit->getPacketID());
+        ev.set_id(t_flit->get_id());
+        ev.set_src(t_flit->get_route().src_router);
+        ev.set_dest(t_flit->get_route().dest_router);
+
+        GarnetLogger::instance().logEvent(ev);
         return;
     }
 

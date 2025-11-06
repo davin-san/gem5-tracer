@@ -28,6 +28,9 @@
 
 Import('*')
 
+Source('proto/garnet_event.pb.cc')
+Source('logger/GarnetLogger.cc')
+
 if env['CONF']['PROTOCOL'] == 'None':
     Return()
 

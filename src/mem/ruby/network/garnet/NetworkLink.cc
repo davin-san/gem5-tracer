@@ -32,10 +32,16 @@
 
 #include "mem/ruby/network/garnet/NetworkLink.hh"
 
+#include <fstream>
+#include <string>
+
 #include "base/trace.hh"
 #include "debug/RubyNetwork.hh"
 #include "mem/ruby/network/garnet/CreditLink.hh"
+#include "mem/ruby/network/garnet/logger/GarnetLogger.hh"
+#include "mem/ruby/network/garnet/proto/garnet_event.pb.h"
 
+using namespace std;
 namespace gem5
 {
 
@@ -84,12 +90,82 @@ NetworkLink::wakeup()
 {
     DPRINTF(RubyNetwork, "Woke up to transfer flits from %s\n",
         src_object->name());
+    string s =this->name().c_str();
     assert(link_srcQueue != nullptr);
     assert(curTick() == clockEdge());
     if (link_srcQueue->isReady(curTick())) {
         flit *t_flit = link_srcQueue->getTopFlit();
         DPRINTF(RubyNetwork, "Transmission will finish at %ld :%s\n",
                 clockEdge(m_latency), *t_flit);
+        if (s.find("ext_links") != std::string::npos) {
+            auto pos = s.find("network_links");
+            auto pos1 = s.find("ext_links");
+            if (pos != std::string::npos) {
+                std::string number = s.substr(pos +
+                    std::string("network_links").size());
+                std::string linkid = s.substr(pos1 +
+                    std::string("ext_links").size());
+                if (!number.empty()) {
+                    int val = std::stoi(number);
+                    int id = std::stoi(linkid);
+                    if (val==0) {
+                        // printf("### %ld SI %d %d %d %d\n",
+                        //     curTick(), t_flit->get_global_id(),
+                        //     t_flit->getPacketID(),
+                        //     t_flit->get_id(), id);
+
+                        garnetlog::GarnetEvent ev;
+                        ev.set_tick(static_cast<int64_t>(curTick()));
+                        ev.set_status("SI");
+                        ev.set_global_id(t_flit->get_global_id());
+                        ev.set_packet_id(t_flit->getPacketID());
+                        ev.set_id(t_flit->get_id());
+                        ev.set_link_id(id);
+
+                        GarnetLogger::instance().logEvent(ev);
+
+                    } else {
+                        // printf("### %ld SE %d %d %d %d\n",
+                        //     curTick(), t_flit->get_global_id(),
+                        //     t_flit->getPacketID(),
+                        //     t_flit->get_id(), id);
+
+                        garnetlog::GarnetEvent ev;
+                        ev.set_tick(static_cast<int64_t>(curTick()));
+                        ev.set_status("SE");
+                        ev.set_global_id(t_flit->get_global_id());
+                        ev.set_packet_id(t_flit->getPacketID());
+                        ev.set_id(t_flit->get_id());
+                        ev.set_link_id(id);
+
+                        GarnetLogger::instance().logEvent(ev);
+
+                    }
+                }
+            }
+        } else if (s.find("int_links") !=
+        std::string::npos &&s.find("network_link") !=
+        std::string::npos){
+            auto pos = s.find("int_links");
+            std::string number = s.substr(pos +
+                std::string("int_links").size());
+            int val = std::stoi(number);
+
+            garnetlog::GarnetEvent ev;
+            ev.set_tick(static_cast<int64_t>(curTick()));
+            ev.set_status("ST");
+            ev.set_global_id(t_flit->get_global_id());
+            ev.set_packet_id(t_flit->getPacketID());
+            ev.set_id(t_flit->get_id());
+            ev.set_link_id(val);
+
+            GarnetLogger::instance().logEvent(ev);
+
+            // printf("### %ld ST %d %d %d %d\n",
+            //     curTick(), t_flit->get_global_id(),
+            //     t_flit->getPacketID(),
+            //     t_flit->get_id(), val);
+        }
         if (m_type != NUM_LINK_TYPES_) {
             // Only for assertions and debug messages
             assert(t_flit->m_width == bitWidth);

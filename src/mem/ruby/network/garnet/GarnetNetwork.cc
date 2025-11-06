@@ -32,6 +32,7 @@
 #include "mem/ruby/network/garnet/GarnetNetwork.hh"
 
 #include <cassert>
+#include <fstream>
 
 #include "base/cast.hh"
 #include "base/compiler.hh"

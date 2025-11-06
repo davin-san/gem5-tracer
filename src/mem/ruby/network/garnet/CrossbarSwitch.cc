@@ -28,12 +28,17 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
+using namespace std;
 #include "mem/ruby/network/garnet/CrossbarSwitch.hh"
+
+#include <fstream>
+#include <mutex>
 
 #include "debug/RubyNetwork.hh"
 #include "mem/ruby/network/garnet/OutputUnit.hh"
 #include "mem/ruby/network/garnet/Router.hh"
+
+mutex log_mutex;
 
 namespace gem5
 {
@@ -81,7 +86,6 @@ CrossbarSwitch::wakeup()
             // flit performs LT_ in the next cycle
             t_flit->advance_stage(LT_, m_router->clockEdge(Cycles(1)));
             t_flit->set_time(m_router->clockEdge(Cycles(1)));
-
             // This will take care of waking up the Network Link
             // in the next cycle
             m_router->getOutputUnit(outport)->insert_flit(t_flit);

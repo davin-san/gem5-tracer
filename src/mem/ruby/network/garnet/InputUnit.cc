@@ -31,9 +31,13 @@
 
 #include "mem/ruby/network/garnet/InputUnit.hh"
 
+#include <fstream>
+
 #include "debug/RubyNetwork.hh"
 #include "mem/ruby/network/garnet/Credit.hh"
 #include "mem/ruby/network/garnet/Router.hh"
+#include "mem/ruby/network/garnet/logger/GarnetLogger.hh"
+#include "mem/ruby/network/garnet/proto/garnet_event.pb.h"
 
 namespace gem5
 {
@@ -83,6 +87,22 @@ InputUnit::wakeup()
         DPRINTF(RubyNetwork, "Router[%d] Consuming:%s Width: %d Flit:%s\n",
         m_router->get_id(), m_in_link->name(),
         m_router->getBitWidth(), *t_flit);
+        // printf("### %ld RR %d %d %d %d\n",
+        //     curTick(),
+        //     t_flit->get_global_id(),
+        //     t_flit->getPacketID(),
+        //     t_flit->get_id(),
+        //     m_router->get_id());
+
+        garnetlog::GarnetEvent ev;
+        ev.set_tick(static_cast<int64_t>(curTick()));
+        ev.set_status("RR");
+        ev.set_global_id(t_flit->get_global_id());
+        ev.set_packet_id(t_flit->getPacketID());
+        ev.set_id(t_flit->get_id());
+        ev.set_link_id(m_router->get_id());
+
+        GarnetLogger::instance().logEvent(ev);
         assert(t_flit->m_width == m_router->getBitWidth());
         int vc = t_flit->get_vc();
         t_flit->increment_hops(); // for stats

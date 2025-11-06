@@ -33,7 +33,9 @@
 
 #include <cassert>
 #include <iostream>
+#include <string>
 
+using namespace std;
 #include "base/types.hh"
 #include "mem/ruby/network/garnet/CommonTypes.hh"
 #include "mem/ruby/slicc_interface/Message.hh"
@@ -65,6 +67,7 @@ class flit
     Tick get_time() { return m_time; }
     int get_vnet() { return m_vnet; }
     int get_vc() { return m_vc; }
+    int get_global_id() {return global_id;}
     RouteInfo get_route() { return m_route; }
     MsgPtr& get_msg_ptr() { return m_msg_ptr; }
     flit_type get_type() { return m_type; }
@@ -118,6 +121,8 @@ class flit
   protected:
     int m_packet_id;
     int m_id;
+    static int next_id;
+    int global_id;
     int m_vnet;
     int m_vc;
     RouteInfo m_route;
