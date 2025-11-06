@@ -32,5 +32,3 @@ configs/example/memcheck.cfg
 configs/dram/lowp_sweep.cfg
 .pyenv
 .vscode
-src/mem/ruby/network/garnet/proto/*.pb.cc
-src/mem/ruby/network/garnet/proto/*.pb.h

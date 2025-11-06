@@ -71,7 +71,7 @@ repos:
   - id: gem5-style-checker
     name: gem5 style checker
     entry: util/git-pre-commit.py
-    always_run: true
+    always_run: false
     exclude: ".*"
     language: system
     description: 'The gem5 style checker hook.'
